@@ -1,0 +1,16 @@
+
+rootProject.name = "restaurant-platform"
+
+include("services:menu-service")
+include("services:orders-service")
+include("services:menu-aggregate-service")
+include("services:dispatcher-service")
+include("services:review-service")
+include("services:payment-service")
+include("services:notification-service")
+include("services:search-service")
+include("services:ai-agent-service")
+
+include("platform:gateway-service")
+
+include("libs:common-events")

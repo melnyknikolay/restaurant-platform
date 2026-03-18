@@ -1,0 +1,36 @@
+
+plugins {
+    id 'java'
+}
+
+allprojects {
+    group = "com.restaurant"
+    version = "1.0.0"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    jar {
+        enabled = false
+    }
+
+    dependencies {
+        implementation platform("org.springframework.boot:spring-boot-dependencies:3.2.5")
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}

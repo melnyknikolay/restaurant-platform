@@ -1,0 +1,26 @@
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payments
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+paypal:
+  base-url: https://api-m.sandbox.paypal.com
+  client-id: CLIENT_ID
+  client-secret: CLIENT_SECRET
+
+resilience4j:
+  retry:
+    instances:
+      paypal:
+        max-attempts: 3
+        wait-duration: 2s
+  circuitbreaker:
+    instances:
+      paypal:
+        sliding-window-size: 10
+        failure-rate-threshold: 50

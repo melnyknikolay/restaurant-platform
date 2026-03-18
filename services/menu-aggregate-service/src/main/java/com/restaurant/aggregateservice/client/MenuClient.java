@@ -1,0 +1,79 @@
+package com.restaurant.aggregateservice.client;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import com.restaurant.aggregateservice.config.props.ExternalServiceProps;
+import com.restaurant.aggregateservice.dto.aggregate.RatedMenuSort;
+import com.restaurant.aggregateservice.dto.menu.Category;
+import com.restaurant.aggregateservice.dto.menu.MenuItem;
+import com.restaurant.aggregateservice.exception.MenuAggregateException;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+
+import static com.restaurant.aggregateservice.dto.aggregate.RatedMenuSort.*;
+
+@Component
+public class MenuClient extends BaseClient {
+
+    private static final EnumSet<RatedMenuSort> SUPPORTED_SORTS = EnumSet.of(AZ, ZA, DATE_ASC, DATE_DESC, PRICE_ASC, PRICE_DESC);
+
+    private static final String MENU_BACKEND = "menuBackend";
+    private final WebClient webClient;
+
+    public MenuClient(@Qualifier("menuWebClient") WebClient menuWebClient,
+                      ExternalServiceProps props) {
+        super(props);
+        this.webClient = menuWebClient;
+    }
+
+    @CircuitBreaker(name = MENU_BACKEND)
+    @Retry(name = MENU_BACKEND)
+    public Mono<MenuItem> getMenuItem(Long menuId) {
+        var mono = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(props.getMenuItemPath())
+                        .path("/{menuId}")
+                        .build(menuId))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        Mono.error(new MenuAggregateException("Menu Service unavailable", HttpStatus.SERVICE_UNAVAILABLE)))
+                .bodyToMono(MenuItem.class);
+
+        return applyTimeoutAndHandleExceptions(mono);
+    }
+
+    @CircuitBreaker(name = MENU_BACKEND)
+    @Retry(name = MENU_BACKEND)
+    public Mono<List<MenuItem>> getMenusForCategory(Category category, RatedMenuSort sort) {
+        var mono = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(props.getMenuItemPath())
+                        .queryParam("category", category)
+                        .queryParamIfPresent("sort",
+                                Optional.of(sort).filter(this::supported))
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        Mono.error(new MenuAggregateException("Menu Service unavailable", HttpStatus.SERVICE_UNAVAILABLE)))
+                .bodyToMono(new ParameterizedTypeReference<List<MenuItem>>() {
+                });
+
+        return applyTimeoutAndHandleExceptions(mono);
+    }
+
+    private boolean supported(RatedMenuSort sort) {
+        return SUPPORTED_SORTS.contains(sort);
+    }
+}

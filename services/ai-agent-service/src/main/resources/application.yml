@@ -1,0 +1,21 @@
+
+server:
+  port: 8086
+
+spring:
+  main:
+    web-application-type: reactive
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY}
+  model: gpt-4o-mini
+
+search:
+  base-url: http://localhost:8085

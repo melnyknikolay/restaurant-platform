@@ -1,0 +1,24 @@
+
+server:
+  port: 8085
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vector_db
+    username: user
+    password: pass
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      ack-mode: record
+
+elasticsearch:
+  host: localhost
+  port: 9200
+  index: menu
+
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY}
+
+
