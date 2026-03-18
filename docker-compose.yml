@@ -1,15 +1,123 @@
 
 version: '3.8'
+
 services:
+
+  # =========================
+  # DATABASE
+  # =========================
   postgres:
     image: postgres:15
+    container_name: postgres
     environment:
       POSTGRES_DB: restaurant
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
 
+  # =========================
+  # KAFKA
+  # =========================
   zookeeper:
     image: confluentinc/cp-zookeeper
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
 
   kafka:
     image: confluentinc/cp-kafka
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # =========================
+  # ELASTICSEARCH
+  # =========================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+  # =========================
+  # REDIS (CACHE)
+  # =========================
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  # =========================
+  # SERVICES
+  # =========================
+
+  menu-service:
+    build: ./services/menu-service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  payment-service:
+    build: ./services/payment-service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  ai-agent-service:
+    build: ./services/ai-agent-service
+    depends_on:
+      - kafka
+      - elasticsearch
+      - redis
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      ELASTICSEARCH_HOST: elasticsearch:9200
+      SPRING_CACHE_TYPE: redis
+      SPRING_REDIS_HOST: redis
+
+  orders-service:
+    build: ./services/orders-service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  review-service:
+    build: ./services/review-service
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  dispatcher-service:
+    build: ./services/dispatcher-service
+    depends_on:
+      - kafka
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092

@@ -1,8 +1,19 @@
-# 🍽️ Restaurant Platform
+# 🍽️ Restaurant Platform 
 
-High-load, event-driven microservices platform built with Spring Boot, Kafka and reactive technologies.
+High-load event-driven microservices platform built with Spring Boot, Kafka and AI components.
 
-This project demonstrates production-grade architecture including distributed systems, asynchronous communication, observability, and external integrations (payments, notifications, AI).
+The system processes asynchronous workflows (orders → payments → notifications), supports hybrid search (Elasticsearch + vector embeddings), and integrates external APIs (PayPal, LLM providers).
+
+
+## 🚧 Project Status
+
+This project is actively under development.
+
+Current focus:
+- Hybrid search implementation
+- AI agent orchestration
+- Observability stack
+
 
 ## ⚙️ Tech Stack
 
@@ -89,6 +100,13 @@ Client → Gateway → Order Service
 - Reactive services (WebFlux)
 - Scalable and cloud-ready design
 
+## 📊 Observability
+
+- Metrics: Micrometer + Prometheus
+- Dashboards: Grafana (request latency, Kafka lag, error rate)
+- Logs: Loki
+- Tracing: Zipkin (distributed tracing across services)
+
 ## ▶️ Run locally
 
 ```bash
@@ -96,6 +114,14 @@ docker-compose up --build
 
 Services will be available via API Gateway:
 http://localhost:8080
+
+This will start:
+
+- PostgreSQL
+- Kafka + Zookeeper
+- Elasticsearch + Kibana
+- Redis
+- All microservices
 ```
 
 ## ☁️ Cloud & Scalability
@@ -162,4 +188,12 @@ This project is designed as a production-like system to demonstrate skills in:
 - Event-driven architecture
 - Backend engineering at scale
 - System integration and API design
+
+## 💡 Highlights
+
+- Hybrid search (vector + Elasticsearch ranking fusion)
+- AI agent with tool-calling (LangChain4j)
+- Event-driven architecture with Kafka
+- Resilience patterns (retry, circuit breaker)
+- Distributed tracing across services
 
